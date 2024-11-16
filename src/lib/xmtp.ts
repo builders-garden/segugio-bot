@@ -2,21 +2,22 @@ import { Client } from "@xmtp/node-sdk";
 
 export async function createGroup(
   client: Client,
-  senderAddress: string,
-  clientAddress: string
+  userAddress: string,
+  botAddress: string
 ) {
   let senderInboxId = "";
   const group = await client?.conversations.newConversation(
-    [senderAddress, clientAddress],
+    [userAddress, botAddress],
     {
-      groupName: "Your Segugios",
-      groupDescription: "A group of wallets that you can copy trades from",
-      groupImageUrlSquare: "",
+      groupName: `Your Segugios`,
+      groupDescription: "Your copy trades made from your segugios",
+      groupImageUrlSquare:
+        "https://utfs.io/f/t8tgsfQ926acWPPu8O0wNAJXTv60KPHjzh94wbOstiSdYola",
     }
   );
   const members = await group.members();
   const senderMember = members.find((member) =>
-    member.accountAddresses.includes(senderAddress.toLowerCase())
+    member.accountAddresses.includes(userAddress.toLowerCase())
   );
   if (senderMember) {
     const senderInboxId = senderMember.inboxId;
@@ -27,7 +28,8 @@ export async function createGroup(
   await group.addSuperAdmin(senderInboxId);
   console.log("Sender is superAdmin", await group.isSuperAdmin(senderInboxId));
   await group.send(`Welcome to your Segugios!`);
-  await group.send(`Here you will see all the `);
-  await group.send(`(Btw, you are an admin of this group as well as the bot)`);
+  await group.send(
+    `Here you will see all the trades made from your segugios copy trading your targets`
+  );
   return group;
 }
