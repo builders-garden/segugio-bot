@@ -1,4 +1,5 @@
-import { ChatXAI } from "@langchain/xai";
+import { ChatOpenAI } from "@langchain/openai";
+// import { ChatXAI } from "@langchain/xai";
 import {
   run,
   HandlerContext,
@@ -26,10 +27,8 @@ run(async (context: HandlerContext) => {
     const brianAgent = await createCustomAgent({
       apiKey: process.env.BRIAN_API_KEY!,
       privateKeyOrAccount: process.env.KEY as `0x${string}`,
-      // llm: new ChatOpenAI({ apiKey: process.env.OPENAI_API_KEY }),
-      llm: new ChatXAI({
-        apiKey: process.env.GROK_API_KEY,
-      }),
+      llm: new ChatOpenAI({ apiKey: process.env.OPENAI_API_KEY }),
+      // llm: new ChatXAI({ apiKey: process.env.GROK_API_KEY }),
       instructions: defaultInstructions,
       xmtpHandler: context,
       xmtpHandlerOptions: {

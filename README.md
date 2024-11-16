@@ -28,4 +28,6 @@ GROK_API_KEY="xai-..."
 BRIAN_API_KEY=""
 # coingecko api key
 COINGECKO_API_KEY="CG"
+# segugio example api key
+SEGUGIO_API_KEY="1234567890"
 ```

@@ -11,10 +11,12 @@ import { ChatMessageHistory } from "langchain/memory";
 import { DynamicStructuredTool } from "langchain/tools";
 import { AIMessage, HumanMessage } from "@langchain/core/messages";
 import { z } from "zod";
+import { resolveEnsDomain } from "./lib/ens.js";
 
 export const defaultInstructions =
   "You are Segugio, a a web3 assistant to help you copy trade users. " +
-  "You do know all the web3 memes. Be little sarcastic but friendly. ";
+  "Only extract relevant information from the text. " +
+  "If you do not know the value of an attribute asked to extract, return null for the attribute's value.";
 
 async function getMessageHistory(
   sessionId: string,
@@ -37,6 +39,7 @@ const coingeckoTool = new DynamicStructuredTool({
   schema: z.object({}),
   func: async () => {
     try {
+      console.log("Coingecko use the force");
       const coingeckoResponse = await fetch(
         `https://api.coingecko.com/api/v3/coins/ethereum`,
         {
@@ -57,6 +60,76 @@ const coingeckoTool = new DynamicStructuredTool({
   },
 });
 
+// https://js.langchain.com/docs/tutorials/extraction/
+const createSegugioSchema = z.object({
+  ensDomain: z
+    .string()
+    .nullish()
+    .describe("The Ethereum ENS domain of the user to copy trade"),
+  address: z
+    .string()
+    .nullish()
+    .describe("The Ethereum address of the user to copy trade"),
+  timeRange: z
+    .enum(["1h", "1d", "1w", "1m", "1y"])
+    .nullish()
+    .describe("The time range for how long to copy trades")
+    .default("1w"),
+  onlyBuyTrades: z
+    .boolean()
+    .nullish()
+    .describe("Whether to only copy buy trades and ignore all sell trades")
+    .default(false),
+});
+
+const createSegugioTool = new DynamicStructuredTool({
+  name: "create_segugio",
+  description: "this tool is used to create a segugio to copy trade an user.",
+  schema: createSegugioSchema,
+  func: async ({
+    ensDomain,
+    address,
+    timeRange,
+    onlyBuyTrades,
+  }: z.infer<typeof createSegugioSchema>) => {
+    try {
+      console.log(
+        "What is love? Segugio  is the answer",
+        JSON.stringify({ ensDomain, address, timeRange, onlyBuyTrades })
+      );
+      let resolvedEnsDomain = null;
+      if (ensDomain) {
+        resolvedEnsDomain = await resolveEnsDomain(ensDomain);
+      }
+      const segugioResponse = await fetch(
+        `https://segugio.vercel.app/api/segugio`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": process.env.SEGUGIO_API_KEY!,
+          },
+          body: JSON.stringify({
+            segugioToolParams: {
+              ensDomain,
+              resolvedEnsDomain,
+              address,
+            },
+            addressToFollow: resolvedEnsDomain ? resolvedEnsDomain : address,
+            timeRange: timeRange ?? "1w",
+            onlyBuyTrades: onlyBuyTrades ?? false,
+          }),
+        }
+      );
+      const data = await segugioResponse.json();
+      return `Segugio created successfully for ${data.address}.`;
+    } catch (error) {
+      console.error("Error Segugio failed to create", error);
+      return `An error occurred while creating a segugio.`;
+    }
+  },
+});
+
 export const createCustomAgent = async ({
   instructions,
   apiKey,
@@ -72,7 +145,7 @@ export const createCustomAgent = async ({
     privateKeyOrAccount,
   });
 
-  const tools = [coingeckoTool, ...brianTools];
+  const tools = [coingeckoTool, createSegugioTool, ...brianTools];
 
   const prompt = ChatPromptTemplate.fromMessages([
     ["system", instructions || defaultInstructions],
@@ -90,6 +163,7 @@ export const createCustomAgent = async ({
   const agentExecutor = new AgentExecutor({
     agent,
     tools,
+    verbose: true,
     callbacks: xmtpHandler
       ? [
           new XMTPCallbackHandler(
