@@ -9,6 +9,7 @@ import {
 } from "@xmtp/message-kit";
 import { createCustomAgent, defaultInstructions } from "./custom-agent.js";
 import { startServer } from "./lib/server.js";
+import { BrianAgentOptions } from "@brian-ai/langchain";
 
 const { client } = await xmtpClient();
 startServer(client);
@@ -35,7 +36,7 @@ run(async (context: HandlerContext) => {
       llm: new ChatOpenAI({ apiKey: process.env.OPENAI_API_KEY }),
       // llm: new ChatXAI({ apiKey: process.env.GROK_API_KEY }),
       instructions: defaultInstructions,
-      xmtpHandler: context,
+      xmtpHandler: context as unknown as BrianAgentOptions["xmtpHandler"],
       xmtpHandlerOptions: {
         onChainError: true,
         onLLMError: true,

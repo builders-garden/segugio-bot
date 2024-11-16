@@ -159,7 +159,10 @@ export const createCustomAgent = async ({
   return new RunnableWithMessageHistory({
     runnable: agentExecutor,
     getMessageHistory: (sessionId: string) =>
-      getMessageHistory(sessionId, xmtpHandler),
+      getMessageHistory(
+        sessionId,
+        xmtpHandler as unknown as BrianAgentOptions["xmtpHandler"]
+      ),
     inputMessagesKey: "input",
     historyMessagesKey: "chat_history",
   });
