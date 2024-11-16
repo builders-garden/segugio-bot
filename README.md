@@ -21,8 +21,9 @@ Set up these variables in your app
 
 ```bash [cmd]
 # get your priv key to use in converse
-# KEY="0x"
-
+KEY="0x..."
+# XMTP server port
+PORT="3333"
 
 #### BRIAN AI LANGCHAIN
 # generate the key from https://console.x.ai

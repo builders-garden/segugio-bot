@@ -5,8 +5,13 @@ import {
   HandlerContext,
   processMultilineResponse,
   getUserInfo,
+  xmtpClient,
 } from "@xmtp/message-kit";
 import { createCustomAgent, defaultInstructions } from "./custom-agent.js";
+import { startServer } from "./lib/server.js";
+
+const { client } = await xmtpClient();
+startServer(client);
 
 run(async (context: HandlerContext) => {
   const {

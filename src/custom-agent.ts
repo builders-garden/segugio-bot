@@ -12,6 +12,7 @@ import { DynamicStructuredTool } from "langchain/tools";
 import { AIMessage, HumanMessage } from "@langchain/core/messages";
 import { z } from "zod";
 import { resolveEnsDomain } from "./lib/ens.js";
+import { createSegugioSchema } from "./lib/schemas/segugio.schema.js";
 
 export const defaultInstructions =
   "You are Segugio, a a web3 assistant to help you copy trade users. " +
@@ -60,28 +61,6 @@ const coingeckoTool = new DynamicStructuredTool({
   },
 });
 
-// https://js.langchain.com/docs/tutorials/extraction/
-const createSegugioSchema = z.object({
-  ensDomain: z
-    .string()
-    .nullish()
-    .describe("The Ethereum ENS domain of the user to copy trade"),
-  address: z
-    .string()
-    .nullish()
-    .describe("The Ethereum address of the user to copy trade"),
-  timeRange: z
-    .enum(["1h", "1d", "1w", "1m", "1y"])
-    .nullish()
-    .describe("The time range for how long to copy trades")
-    .default("1w"),
-  onlyBuyTrades: z
-    .boolean()
-    .nullish()
-    .describe("Whether to only copy buy trades and ignore all sell trades")
-    .default(false),
-});
-
 const createSegugioTool = new DynamicStructuredTool({
   name: "create_segugio",
   description: "this tool is used to create a segugio to copy trade an user.",
@@ -91,16 +70,15 @@ const createSegugioTool = new DynamicStructuredTool({
     address,
     timeRange,
     onlyBuyTrades,
+    portfolioPercentage,
+    tokenFrom,
   }: z.infer<typeof createSegugioSchema>) => {
     try {
-      console.log(
-        "What is love? Segugio  is the answer",
-        JSON.stringify({ ensDomain, address, timeRange, onlyBuyTrades })
-      );
       let resolvedEnsDomain = null;
       if (ensDomain) {
         resolvedEnsDomain = await resolveEnsDomain(ensDomain);
       }
+      const addressToFollow = resolvedEnsDomain ? resolvedEnsDomain : address;
       const segugioResponse = await fetch(
         `${process.env.SEGUGIO_BACKEND_URL}/segugio/create`,
         {
@@ -115,9 +93,11 @@ const createSegugioTool = new DynamicStructuredTool({
               resolvedEnsDomain,
               address,
             },
-            addressToFollow: resolvedEnsDomain ? resolvedEnsDomain : address,
+            addressToFollow,
             timeRange: timeRange ?? "1w",
-            onlyBuyTrades: onlyBuyTrades ?? false,
+            onlyBuyTrades: onlyBuyTrades ?? true,
+            portfolioPercentage: portfolioPercentage ?? 0.1,
+            tokenFrom: tokenFrom ?? "USDC",
           }),
         }
       );
