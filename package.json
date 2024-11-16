@@ -12,7 +12,8 @@
     "@langchain/core": "^0.3.18",
     "@langchain/openai": "^0.3.13",
     "@langchain/xai": "^0.0.1",
-    "@xmtp/message-kit": "1.1.8-beta.3"
+    "@xmtp/message-kit": "1.1.8-beta.3",
+    "langchain": "^0.3.5"
   },
   "engines": {
     "node": ">=20"

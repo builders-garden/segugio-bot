@@ -102,7 +102,7 @@ const createSegugioTool = new DynamicStructuredTool({
         resolvedEnsDomain = await resolveEnsDomain(ensDomain);
       }
       const segugioResponse = await fetch(
-        `https://segugio.vercel.app/api/segugio`,
+        `${process.env.SEGUGIO_BACKEND_URL}/segugio/create`,
         {
           method: "POST",
           headers: {
