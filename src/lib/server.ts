@@ -64,6 +64,7 @@ export function startServer(client: Client) {
         throw new Error("missing required fields");
       }
       try {
+        console.log("🔍 send message to group id", groupId);
         const conversation = await client.conversations.getConversationById(
           groupId
         );

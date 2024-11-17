@@ -90,3 +90,18 @@ export const addFundsSchema = z.object({
     .nullish()
     .describe("The address to add funds to the bot wallet"),
 });
+
+export const checkStatsSchema = z.object({
+  ensDomain: z
+    .string()
+    .nullish()
+    .describe(
+      "The Ethereum ENS domain of the user to check stats from, it can be null"
+    ),
+  address: z
+    .string()
+    .nullish()
+    .describe(
+      "The Ethereum address of the user to check stats from, it can be null"
+    ),
+});

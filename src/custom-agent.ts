@@ -14,6 +14,7 @@ import { z } from "zod";
 import { resolveEnsDomain } from "./lib/ens.js";
 import {
   addFundsSchema,
+  checkStatsSchema,
   createSegugioSchema,
   sellFromSegugioSchema,
   withdrawFromSegugioSchema,
@@ -289,6 +290,50 @@ const addFundsTool = new DynamicStructuredTool({
   },
 });
 
+const checkStatsTool = (
+  xmtpUserAddress?: string,
+  xmtpHandler?: BrianAgentOptions["xmtpHandler"]
+) =>
+  new DynamicStructuredTool({
+    name: "check_stats",
+    description: "this tool is used to check the stats of all the segugio.",
+    schema: checkStatsSchema,
+    func: async ({ ensDomain, address }: z.infer<typeof checkStatsSchema>) => {
+      try {
+        console.log("📈 Check stats for segugios", ensDomain, address);
+        let resolvedEnsDomain = null;
+        if (ensDomain) {
+          resolvedEnsDomain = await resolveEnsDomain(ensDomain);
+        }
+        const addressToFollow = resolvedEnsDomain ? resolvedEnsDomain : address;
+        const segugioResponse = await fetch(
+          `${process.env.SEGUGIO_BACKEND_URL}/segugio/stats`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              owner: xmtpUserAddress,
+              target: addressToFollow,
+            }),
+          }
+        );
+        const { status, data } = await segugioResponse.json();
+        if (status === "ok") {
+          data.message.split("\n").map((msg: string) => {
+            xmtpHandler?.send(msg);
+          });
+          return `Successfully checked the stats of all your segugios.`;
+        }
+        return `There was an error while checking the stats of your segugios.`;
+      } catch (error) {
+        console.error("Error Segugio failed to check stats", error);
+        return `An error occurred while checking the stats of a segugio.`;
+      }
+    },
+  });
+
 export const createCustomAgent = async ({
   instructions,
   // apiKey,
@@ -314,6 +359,7 @@ export const createCustomAgent = async ({
     sellFromSegugioTool(xmtpHandler?.sender?.address),
     withdrawFromSegugioTool(xmtpHandler?.sender?.address),
     addFundsTool,
+    checkStatsTool(xmtpHandler?.sender?.address, xmtpHandler),
     // ...brianTools,
   ];
 
