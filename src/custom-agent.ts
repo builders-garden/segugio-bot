@@ -149,10 +149,11 @@ const createSegugioTool = (
         );
         const { status, data } = await segugioResponse.json();
         if (status === "ok") {
-          const txpayUrl = "https://txpay.vercel.app";
-          let paymentUrl = `${txpayUrl}/?&amount=${"100"}&token=${"ETH"}&receiver=${xmtpBotAddress}`;
+          const segugioAddress = data.segugio.address;
+          const baseFrameUrl = "https://xmtp-mio-frame.vercel.app";
+          let paymentUrl = `${baseFrameUrl}/?transaction_type=send&buttonName=Send&amount=${"0.003"}&token=${"ETH"}&receiver=${segugioAddress}`;
           xmtpHandler?.send(
-            `💰 Now you can add funds to the bot to start copying trades. Continue here: ${paymentUrl} or sends funds manually to the bot wallet at ${xmtpBotAddress}`
+            `💰 Now you can add funds on Base to the bot to start copying trades. Continue here: ${paymentUrl} or sends funds manually to the bot wallet at ${segugioAddress}`
           );
         }
         return `${data.message}.`;
@@ -307,7 +308,7 @@ const checkStatsTool = (
         }
         const addressToFollow = resolvedEnsDomain ? resolvedEnsDomain : address;
         const segugioResponse = await fetch(
-          `${process.env.SEGUGIO_BACKEND_URL}/segugio/stats`,
+          `${process.env.SEGUGIO_BACKEND_URL}/segugio/get-stats`,
           {
             method: "POST",
             headers: {
