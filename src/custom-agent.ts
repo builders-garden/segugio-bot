@@ -149,12 +149,14 @@ const createSegugioTool = (
         );
         const { status, data } = await segugioResponse.json();
         if (status === "ok") {
-          const segugioAddress = data.segugio.address;
-          const baseFrameUrl = "https://xmtp-mio-frame.vercel.app";
-          let paymentUrl = `${baseFrameUrl}/?transaction_type=send&buttonName=Send&amount=${"0.003"}&token=${"ETH"}&receiver=${segugioAddress}`;
-          xmtpHandler?.send(
-            `💰 Now you can add funds on Base to the bot to start copying trades. Continue here: ${paymentUrl} or sends funds manually to the bot wallet at ${segugioAddress}`
-          );
+          if (!data.message.startsWith("Segugio already exists")) {
+            const segugioAddress = data.segugio.address;
+            const baseFrameUrl = "https://xmtp-mio-frame.vercel.app";
+            let paymentUrl = `${baseFrameUrl}/?transaction_type=send&buttonName=Send&amount=${"0.003"}&token=${"ETH"}&receiver=${segugioAddress}`;
+            xmtpHandler?.send(
+              `💰 Now you can add funds on Base to the bot to start copying trades. Continue here: ${paymentUrl} or sends funds manually to the bot wallet at ${segugioAddress}`
+            );
+          }
         }
         return `${data.message}.`;
       } catch (error) {
